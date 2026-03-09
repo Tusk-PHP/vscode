@@ -1,0 +1,33 @@
+{
+  "name": "php-lsp",
+  "displayName": "PHP LSP (Go)",
+  "description": "PHP 8.5+ Language Server with Laravel/Symfony container-aware intelligence",
+  "version": "0.1.0",
+  "publisher": "rubenrobles",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages"],
+  "activationEvents": ["onLanguage:php"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "PHP LSP",
+      "properties": {
+        "phpLsp.enable": { "type": "boolean", "default": true },
+        "phpLsp.executablePath": { "type": "string", "default": "" },
+        "phpLsp.phpVersion": { "type": "string", "default": "8.5", "enum": ["8.0","8.1","8.2","8.3","8.4","8.5"] },
+        "phpLsp.framework": { "type": "string", "default": "auto", "enum": ["auto","laravel","symfony","none"] },
+        "phpLsp.containerAware": { "type": "boolean", "default": true },
+        "phpLsp.diagnostics.enable": { "type": "boolean", "default": true },
+        "phpLsp.maxIndexFiles": { "type": "number", "default": 10000 },
+        "phpLsp.excludePaths": { "type": "array", "default": ["vendor","node_modules",".git","storage","var/cache"] }
+      }
+    },
+    "commands": [
+      { "command": "phpLsp.restart", "title": "PHP LSP: Restart Server" },
+      { "command": "phpLsp.reindex", "title": "PHP LSP: Re-index Workspace" }
+    ]
+  },
+  "scripts": { "compile": "tsc -p ./", "watch": "tsc -watch -p ./" },
+  "dependencies": { "vscode-languageclient": "^9.0.1" },
+  "devDependencies": { "@types/node": "^20.11.0", "@types/vscode": "^1.85.0", "typescript": "^5.3.0" }
+}
