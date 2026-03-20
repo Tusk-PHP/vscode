@@ -41,8 +41,10 @@
       }
     },
     "commands": [
-      { "command": "phpLsp.restart", "title": "PHP LSP: Restart Server" },
-      { "command": "phpLsp.reindex", "title": "PHP LSP: Re-index Workspace" }
+      { "command": "phpLsp.restart", "title": "Tusk PHP: Restart Server" },
+      { "command": "phpLsp.reindex", "title": "Tusk PHP: Re-index Workspace" },
+      { "command": "phpLsp.copyNamespace", "title": "Tusk PHP: Copy Namespace" },
+      { "command": "phpLsp.moveToNamespace", "title": "Tusk PHP: Move to Namespace..." }
     ]
   },
   "scripts": { "compile": "tsc -p ./", "watch": "tsc -watch -p ./" },

@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as fs from "fs";
-import { workspace, ExtensionContext, commands, window, OutputChannel } from "vscode";
+import { workspace, ExtensionContext, commands, window, OutputChannel, env, WorkspaceEdit as VSWorkspaceEdit, Uri, Range as VSRange, Position as VSPosition } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions, State, TransportKind } from "vscode-languageclient/node";
 
 let client: LanguageClient | undefined;
@@ -18,6 +18,76 @@ export function activate(context: ExtensionContext) {
   });
   context.subscriptions.push(commands.registerCommand("phpLsp.restart", () => restartServer(context)));
   context.subscriptions.push(commands.registerCommand("phpLsp.reindex", () => { client?.sendNotification("phpLsp/reindex"); window.showInformationMessage("PHP LSP: Re-indexing..."); }));
+
+  // Copy Namespace — copies FQN to clipboard
+  context.subscriptions.push(commands.registerCommand("phpLsp.copyNamespace", async (...args: unknown[]) => {
+    if (!client) return;
+    const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
+    if (!uri) return;
+    try {
+      const ns = await client.sendRequest<string>("workspace/executeCommand", { command: "phpLsp.copyNamespace", arguments: [uri] });
+      if (ns) {
+        await env.clipboard.writeText(ns);
+        window.showInformationMessage(`Copied: ${ns}`);
+      }
+    } catch (err) {
+      outputChannel.appendLine(`copyNamespace error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }));
+
+  // Move to Namespace — prompts for target, sends to server
+  context.subscriptions.push(commands.registerCommand("phpLsp.moveToNamespace", async (...args: unknown[]) => {
+    if (!client) return;
+    const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
+    if (!uri) return;
+
+    // Pre-fill with current namespace
+    let currentNs = "";
+    try {
+      const fqn = await client.sendRequest<string>("workspace/executeCommand", { command: "phpLsp.copyNamespace", arguments: [uri] });
+      if (fqn) {
+        const sep = fqn.lastIndexOf("\\");
+        currentNs = sep > 0 ? fqn.substring(0, sep) : fqn;
+      }
+    } catch { /* ignore */ }
+
+    const targetNS = await window.showInputBox({
+      prompt: "Enter the target namespace",
+      value: currentNs,
+      placeHolder: "App\\Domain\\Models",
+      validateInput: (v) => v.trim() === "" ? "Namespace cannot be empty" : undefined,
+    });
+    if (!targetNS) return;
+
+    try {
+      const result = await client.sendRequest<{ changes?: Record<string, Array<{ range: { start: { line: number; character: number }; end: { line: number; character: number } }; newText: string }>> }>(
+        "workspace/executeCommand", { command: "phpLsp.moveToNamespace", arguments: [uri, targetNS] }
+      );
+      if (result?.changes) {
+        const wsEdit = new VSWorkspaceEdit();
+        for (const [fileUri, edits] of Object.entries(result.changes)) {
+          for (const edit of edits) {
+            wsEdit.replace(
+              Uri.parse(fileUri),
+              new VSRange(
+                new VSPosition(edit.range.start.line, edit.range.start.character),
+                new VSPosition(edit.range.end.line, edit.range.end.character)
+              ),
+              edit.newText
+            );
+          }
+        }
+        const applied = await workspace.applyEdit(wsEdit);
+        if (applied) {
+          window.showInformationMessage(`Moved to namespace ${targetNS}`);
+        } else {
+          window.showErrorMessage("Failed to apply namespace changes");
+        }
+      }
+    } catch (err) {
+      window.showErrorMessage(`Move to namespace failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }));
 }
 
 function findServerBinary(context: ExtensionContext): string {
