@@ -60,34 +60,76 @@ export function activate(context: ExtensionContext) {
     if (!targetNS) return;
 
     try {
-      const result = await client.sendRequest<{ changes?: Record<string, Array<{ range: { start: { line: number; character: number }; end: { line: number; character: number } }; newText: string }>> }>(
-        "workspace/executeCommand", { command: "phpLsp.moveToNamespace", arguments: [uri, targetNS] }
-      );
-      if (result?.changes) {
-        const wsEdit = new VSWorkspaceEdit();
-        for (const [fileUri, edits] of Object.entries(result.changes)) {
-          for (const edit of edits) {
-            wsEdit.replace(
-              Uri.parse(fileUri),
-              new VSRange(
-                new VSPosition(edit.range.start.line, edit.range.start.character),
-                new VSPosition(edit.range.end.line, edit.range.end.character)
-              ),
-              edit.newText
-            );
-          }
-        }
-        const applied = await workspace.applyEdit(wsEdit);
-        if (applied) {
-          window.showInformationMessage(`Moved to namespace ${targetNS}`);
-        } else {
-          window.showErrorMessage("Failed to apply namespace changes");
-        }
+      const applied = await executeMoveToNamespace(uri, targetNS);
+      if (applied) {
+        window.showInformationMessage(`Moved to namespace ${targetNS}`);
       }
     } catch (err) {
       window.showErrorMessage(`Move to namespace failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   }));
+
+  // Auto-update namespace when a PHP file is moved/renamed in the file explorer
+  context.subscriptions.push(workspace.onDidRenameFiles(async (e) => {
+    if (!client) return;
+    for (const { oldUri, newUri } of e.files) {
+      if (!oldUri.fsPath.endsWith(".php") || !newUri.fsPath.endsWith(".php")) continue;
+      try {
+        // Check if the file has a namespace declaration
+        const doc = await workspace.openTextDocument(newUri);
+        const text = doc.getText();
+        if (!/^\s*namespace\s+/m.test(text)) continue;
+
+        // Ask the server what namespace the new path should have
+        const expectedNs = await client.sendRequest<string>(
+          "workspace/executeCommand",
+          { command: "phpLsp.namespaceForPath", arguments: [newUri.toString()] }
+        );
+        if (!expectedNs) continue;
+
+        // Get the current namespace from the file
+        const nsMatch = text.match(/^\s*namespace\s+([^;{]+)/m);
+        const currentNs = nsMatch?.[1]?.trim();
+        if (!currentNs || currentNs === expectedNs) continue;
+
+        const action = await window.showInformationMessage(
+          `Update namespace to "${expectedNs}"?`,
+          "Update",
+          "Skip"
+        );
+        if (action !== "Update") continue;
+
+        await executeMoveToNamespace(newUri.toString(), expectedNs);
+      } catch (err) {
+        outputChannel.appendLine(`Auto-namespace error: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+  }));
+}
+
+/** Send moveToNamespace to the server and apply the returned WorkspaceEdit. */
+async function executeMoveToNamespace(uri: string, targetNS: string): Promise<boolean> {
+  if (!client) return false;
+  type ServerEdit = { changes?: Record<string, Array<{ range: { start: { line: number; character: number }; end: { line: number; character: number } }; newText: string }>> };
+  const result = await client.sendRequest<ServerEdit>(
+    "workspace/executeCommand",
+    { command: "phpLsp.moveToNamespace", arguments: [uri, targetNS] }
+  );
+  if (!result?.changes) return false;
+  const wsEdit = new VSWorkspaceEdit();
+  for (const [fileUri, edits] of Object.entries(result.changes)) {
+    for (const edit of edits) {
+      wsEdit.replace(
+        Uri.parse(fileUri),
+        new VSRange(
+          new VSPosition(edit.range.start.line, edit.range.start.character),
+          new VSPosition(edit.range.end.line, edit.range.end.character)
+        ),
+        edit.newText
+      );
+    }
+  }
+  return workspace.applyEdit(wsEdit);
 }
 
 function findServerBinary(context: ExtensionContext): string {
