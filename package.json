@@ -4,12 +4,19 @@
   "description": "PHP 8.5+ Language Server with Laravel/Symfony container-aware intelligence",
   "version": "0.1.0",
   "publisher": "open-southeners",
+  "license": "MIT",
+  "icon": "icon.png",
+  "homepage": "https://github.com/open-southeners/php-lsp",
+  "bugs": {
+    "url": "https://github.com/open-southeners/php-lsp/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/open-southeners/php-lsp.git"
   },
   "engines": { "vscode": "^1.85.0" },
-  "categories": ["Programming Languages"],
+  "categories": ["Programming Languages", "Linters"],
+  "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
   "activationEvents": ["onLanguage:php"],
   "main": "./out/extension.js",
   "contributes": {
