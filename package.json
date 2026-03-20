@@ -1,7 +1,7 @@
 {
-  "name": "php-lsp",
-  "displayName": "PHP LSP",
-  "description": "PHP 8.5+ Language Server with Laravel/Symfony container-aware intelligence",
+  "name": "tusk-php",
+  "displayName": "Tusk PHP",
+  "description": "High-performance PHP 8.5+ language server with Laravel & Symfony container-aware intelligence",
   "version": "0.1.0",
   "publisher": "open-southeners",
   "license": "MIT",
