@@ -9,23 +9,23 @@ let lifecycle: Promise<void> = Promise.resolve();
 let outputChannel: OutputChannel;
 
 export function activate(context: ExtensionContext) {
-  outputChannel = window.createOutputChannel("PHP LSP");
+  outputChannel = window.createOutputChannel("Tusk PHP LSP");
   context.subscriptions.push(outputChannel);
-  const config = workspace.getConfiguration("phpLsp");
+  const config = workspace.getConfiguration("tuskPhpLsp");
   if (!config.get<boolean>("enable", true)) return;
   void runTransition(async () => {
     await startServer(context);
   });
-  context.subscriptions.push(commands.registerCommand("phpLsp.restart", () => restartServer(context)));
-  context.subscriptions.push(commands.registerCommand("phpLsp.reindex", () => { client?.sendNotification("phpLsp/reindex"); window.showInformationMessage("PHP LSP: Re-indexing..."); }));
+  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.restart", () => restartServer(context)));
+  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.reindex", () => { client?.sendNotification("tuskPhpLsp/reindex"); window.showInformationMessage("Tusk PHP LSP: Re-indexing..."); }));
 
   // Copy Namespace — copies FQN to clipboard
-  context.subscriptions.push(commands.registerCommand("phpLsp.copyNamespace", async (...args: unknown[]) => {
+  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.copyNamespace", async (...args: unknown[]) => {
     if (!client) return;
     const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
     if (!uri) return;
     try {
-      const ns = await client.sendRequest<string>("workspace/executeCommand", { command: "phpLsp.copyNamespace", arguments: [uri] });
+      const ns = await client.sendRequest<string>("workspace/executeCommand", { command: "tuskPhpLsp.copyNamespace", arguments: [uri] });
       if (ns) {
         await env.clipboard.writeText(ns);
         window.showInformationMessage(`Copied: ${ns}`);
@@ -36,7 +36,7 @@ export function activate(context: ExtensionContext) {
   }));
 
   // Move to Namespace — prompts for target, sends to server
-  context.subscriptions.push(commands.registerCommand("phpLsp.moveToNamespace", async (...args: unknown[]) => {
+  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.moveToNamespace", async (...args: unknown[]) => {
     if (!client) return;
     const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
     if (!uri) return;
@@ -44,7 +44,7 @@ export function activate(context: ExtensionContext) {
     // Pre-fill with current namespace
     let currentNs = "";
     try {
-      const fqn = await client.sendRequest<string>("workspace/executeCommand", { command: "phpLsp.copyNamespace", arguments: [uri] });
+      const fqn = await client.sendRequest<string>("workspace/executeCommand", { command: "tuskPhpLsp.copyNamespace", arguments: [uri] });
       if (fqn) {
         const sep = fqn.lastIndexOf("\\");
         currentNs = sep > 0 ? fqn.substring(0, sep) : fqn;
@@ -83,7 +83,7 @@ export function activate(context: ExtensionContext) {
         // Ask the server what namespace the new path should have
         const expectedNs = await client.sendRequest<string>(
           "workspace/executeCommand",
-          { command: "phpLsp.namespaceForPath", arguments: [newUri.toString()] }
+          { command: "tuskPhpLsp.namespaceForPath", arguments: [newUri.toString()] }
         );
         if (!expectedNs) continue;
 
@@ -113,7 +113,7 @@ async function executeMoveToNamespace(uri: string, targetNS: string): Promise<bo
   type ServerEdit = { changes?: Record<string, Array<{ range: { start: { line: number; character: number }; end: { line: number; character: number } }; newText: string }>> };
   const result = await client.sendRequest<ServerEdit>(
     "workspace/executeCommand",
-    { command: "phpLsp.moveToNamespace", arguments: [uri, targetNS] }
+    { command: "tuskPhpLsp.moveToNamespace", arguments: [uri, targetNS] }
   );
   if (!result?.changes) return false;
   const wsEdit = new VSWorkspaceEdit();
@@ -133,7 +133,7 @@ async function executeMoveToNamespace(uri: string, targetNS: string): Promise<bo
 }
 
 function findServerBinary(context: ExtensionContext): string {
-  const configPath = workspace.getConfiguration("phpLsp").get<string>("executablePath", "");
+  const configPath = workspace.getConfiguration("tuskPhpLsp").get<string>("executablePath", "");
   if (configPath && fs.existsSync(configPath)) return configPath;
   const platformMap: Record<string, string> = { darwin: "darwin", linux: "linux", win32: "windows" };
   const archMap: Record<string, string> = { x64: "amd64", arm64: "arm64" };
@@ -148,7 +148,7 @@ function findServerBinary(context: ExtensionContext): string {
 function runTransition(action: () => Promise<void>): Promise<void> {
   lifecycle = lifecycle.catch(() => undefined).then(action);
   return lifecycle.catch((err) => {
-    outputChannel.appendLine(`PHP LSP lifecycle error: ${formatError(err)}`);
+    outputChannel.appendLine(`Tusk PHP LSP lifecycle error: ${formatError(err)}`);
   });
 }
 
@@ -159,7 +159,7 @@ function formatError(err: unknown): string {
 async function startServer(context: ExtensionContext) {
   if (client) return;
   const serverPath = findServerBinary(context);
-  const config = workspace.getConfiguration("phpLsp");
+  const config = workspace.getConfiguration("tuskPhpLsp");
   const serverOptions: ServerOptions = { command: serverPath, args: ["--transport", "stdio"], transport: TransportKind.stdio };
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: "file", language: "php" }],
@@ -181,20 +181,20 @@ async function startServer(context: ExtensionContext) {
       excludePaths: config.get("excludePaths", ["vendor", "node_modules", ".git"]),
     },
   };
-  const nextClient = new LanguageClient("phpLsp", "PHP LSP", serverOptions, clientOptions);
+  const nextClient = new LanguageClient("tuskPhpLsp", "Tusk PHP LSP", serverOptions, clientOptions);
   nextClient.onDidChangeState(({ oldState, newState }) => {
-    outputChannel.appendLine(`PHP LSP state: ${State[oldState]} -> ${State[newState]}`);
+    outputChannel.appendLine(`Tusk PHP LSP state: ${State[oldState]} -> ${State[newState]}`);
   });
   client = nextClient;
   clientStart = Promise.resolve(nextClient.start())
     .then(() => {
-      outputChannel.appendLine("PHP LSP server started");
+      outputChannel.appendLine("Tusk PHP LSP server started");
     })
     .catch((err) => {
       if (client === nextClient) {
         client = undefined;
       }
-      window.showErrorMessage(`PHP LSP failed: ${formatError(err)}`);
+      window.showErrorMessage(`Tusk PHP LSP failed: ${formatError(err)}`);
       throw err;
     })
     .finally(() => {
@@ -209,7 +209,7 @@ async function restartServer(context: ExtensionContext) {
   await runTransition(async () => {
     await stopServer();
     await startServer(context);
-    window.showInformationMessage("PHP LSP: Server restarted");
+    window.showInformationMessage("Tusk PHP LSP: Server restarted");
   });
 }
 
