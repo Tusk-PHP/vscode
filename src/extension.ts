@@ -134,14 +134,24 @@ async function executeMoveToNamespace(uri: string, targetNS: string): Promise<bo
 
 function findServerBinary(context: ExtensionContext): string {
   const configPath = workspace.getConfiguration("tuskPhpLsp").get<string>("executablePath", "");
-  if (configPath && fs.existsSync(configPath)) return configPath;
+  if (configPath) {
+    if (fs.existsSync(configPath)) {
+      outputChannel.appendLine(`Using configured binary: ${configPath}`);
+      return configPath;
+    }
+    outputChannel.appendLine(`Configured binary not found: ${configPath}`);
+  }
   const platformMap: Record<string, string> = { darwin: "darwin", linux: "linux", win32: "windows" };
   const archMap: Record<string, string> = { x64: "amd64", arm64: "arm64" };
   const goos = platformMap[process.platform] ?? process.platform;
   const goarch = archMap[process.arch] ?? process.arch;
   const ext = process.platform === "win32" ? ".exe" : "";
   const bundled = path.join(context.extensionPath, "bin", `${goos}-${goarch}`, `php-lsp${ext}`);
-  if (fs.existsSync(bundled)) return bundled;
+  if (fs.existsSync(bundled)) {
+    outputChannel.appendLine(`Using bundled binary: ${bundled}`);
+    return bundled;
+  }
+  outputChannel.appendLine(`Falling back to PATH: php-lsp`);
   return "php-lsp";
 }
 
