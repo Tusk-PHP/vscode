@@ -2,7 +2,7 @@
   "name": "tusk-php",
   "displayName": "Tusk PHP",
   "description": "High-performance PHP 8.5+ language server with Laravel & Symfony container-aware intelligence",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "open-southeners",
   "license": "MIT",
   "icon": "icon.png",
