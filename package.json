@@ -6,13 +6,13 @@
   "publisher": "open-southeners",
   "license": "MIT",
   "icon": "icon.png",
-  "homepage": "https://github.com/open-southeners/php-lsp",
+  "homepage": "https://github.com/open-southeners/tusk-php",
   "bugs": {
-    "url": "https://github.com/open-southeners/php-lsp/issues"
+    "url": "https://github.com/open-southeners/tusk-php/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/open-southeners/php-lsp.git"
+    "url": "https://github.com/open-southeners/tusk-php.git"
   },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Programming Languages", "Linters"],
