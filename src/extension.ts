@@ -148,11 +148,15 @@ function findServerBinary(context: ExtensionContext): string {
   const ext = process.platform === "win32" ? ".exe" : "";
   const bundled = path.join(context.extensionPath, "bin", `${goos}-${goarch}`, `php-lsp${ext}`);
   if (fs.existsSync(bundled)) {
+    if (process.platform !== "win32") {
+      try { fs.chmodSync(bundled, 0o755); } catch {}
+    }
     outputChannel.appendLine(`Using bundled binary: ${bundled}`);
     return bundled;
   }
-  outputChannel.appendLine(`Falling back to PATH: php-lsp`);
-  return "php-lsp";
+  const fallback = `php-lsp${ext}`;
+  outputChannel.appendLine(`Falling back to PATH: ${fallback}`);
+  return fallback;
 }
 
 function runTransition(action: () => Promise<void>): Promise<void> {
