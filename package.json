@@ -24,7 +24,7 @@
       "title": "Tusk PHP LSP",
       "properties": {
         "tuskPhpLsp.enable": { "type": "boolean", "default": true, "description": "Enable/disable the Tusk PHP LSP extension" },
-        "tuskPhpLsp.executablePath": { "type": "string", "default": "", "description": "Custom path to the php-lsp binary" },
+        "tuskPhpLsp.executablePath": { "type": "string", "default": "", "description": "Custom path to the tusk-php binary" },
         "tuskPhpLsp.phpVersion": { "type": "string", "default": "8.5", "enum": ["8.0","8.1","8.2","8.3","8.4","8.5"], "description": "Target PHP version for analysis" },
         "tuskPhpLsp.framework": { "type": "string", "default": "auto", "enum": ["auto","laravel","symfony","none"], "description": "Framework to use for container-aware intelligence" },
         "tuskPhpLsp.containerAware": { "type": "boolean", "default": true, "description": "Enable container-aware completions and analysis" },

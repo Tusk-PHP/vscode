@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "php-lsp",
+      "name": "tusk-php",
       "dependencies": {
         "vscode-languageclient": "^9.0.1",
       },

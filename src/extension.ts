@@ -146,7 +146,7 @@ function findServerBinary(context: ExtensionContext): string {
   const goos = platformMap[process.platform] ?? process.platform;
   const goarch = archMap[process.arch] ?? process.arch;
   const ext = process.platform === "win32" ? ".exe" : "";
-  const bundled = path.join(context.extensionPath, "bin", `${goos}-${goarch}`, `php-lsp${ext}`);
+  const bundled = path.join(context.extensionPath, "bin", `${goos}-${goarch}`, `tusk-php${ext}`);
   if (fs.existsSync(bundled)) {
     if (process.platform !== "win32") {
       try { fs.chmodSync(bundled, 0o755); } catch {}
@@ -154,7 +154,7 @@ function findServerBinary(context: ExtensionContext): string {
     outputChannel.appendLine(`Using bundled binary: ${bundled}`);
     return bundled;
   }
-  const fallback = `php-lsp${ext}`;
+  const fallback = `tusk-php${ext}`;
   outputChannel.appendLine(`Falling back to PATH: ${fallback}`);
   return fallback;
 }
