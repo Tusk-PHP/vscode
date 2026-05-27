@@ -193,6 +193,8 @@ async function startServer(context: ExtensionContext) {
       pintConfig: config.get("diagnostics.pint.configPath", ""),
       maxIndexFiles: config.get("maxIndexFiles", 10000),
       excludePaths: config.get("excludePaths", ["vendor", "node_modules", ".git"]),
+      phpManualLocale: config.get("phpManual.locale", ""),
+      phpManualOpenOnDefinition: config.get("phpManual.openOnDefinition", false),
     },
   };
   const nextClient = new LanguageClient("tuskPhpLsp", "Tusk PHP LSP", serverOptions, clientOptions);

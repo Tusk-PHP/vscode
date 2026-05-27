@@ -37,7 +37,18 @@
         "tuskPhpLsp.diagnostics.pint.path": { "type": "string", "default": "", "description": "Custom path to Pint binary (auto-detects vendor/bin/pint)" },
         "tuskPhpLsp.diagnostics.pint.configPath": { "type": "string", "default": "", "description": "Custom path to pint.json config file" },
         "tuskPhpLsp.maxIndexFiles": { "type": "number", "default": 10000, "description": "Maximum number of PHP files to index" },
-        "tuskPhpLsp.excludePaths": { "type": "array", "default": ["vendor","node_modules",".git","storage","var/cache"], "description": "Paths to exclude from indexing" }
+        "tuskPhpLsp.excludePaths": { "type": "array", "default": ["vendor","node_modules",".git","storage","var/cache"], "description": "Paths to exclude from indexing" },
+        "tuskPhpLsp.phpManual.locale": {
+          "type": "string",
+          "default": "",
+          "enum": ["", "en", "de", "es", "fr", "it", "ja", "pt_BR", "ru", "tr", "zh"],
+          "description": "Locale for php.net manual links shown in hover and opened via Cmd+Click. Empty falls back to English."
+        },
+        "tuskPhpLsp.phpManual.openOnDefinition": {
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, Cmd+Click (Go to Definition) on a built-in PHP symbol opens its page on php.net in your browser instead of doing nothing. Requires the editor to support window/showDocument (VS Code does)."
+        }
       }
     },
     "commands": [
