@@ -17,7 +17,7 @@
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Programming Languages", "Linters"],
   "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
-  "activationEvents": ["onLanguage:php"],
+  "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
@@ -48,6 +48,16 @@
           "type": "boolean",
           "default": false,
           "description": "When enabled, Cmd+Click (Go to Definition) on a built-in PHP symbol opens its page on php.net in your browser instead of doing nothing. Requires the editor to support window/showDocument (VS Code does)."
+        },
+        "tuskPhpLsp.composer.hover.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show hover cards on package keys in composer.json require/require-dev (name, PHP requirement, installed version, source URL)."
+        },
+        "tuskPhpLsp.composer.openOnDefinition": {
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, Cmd+Click (Go to Definition) on a package name in composer.json opens the package's Packagist (or repository) page in your browser. Requires the editor to support window/showDocument (VS Code does)."
         }
       }
     },

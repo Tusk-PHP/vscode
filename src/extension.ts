@@ -176,7 +176,12 @@ async function startServer(context: ExtensionContext) {
   const config = workspace.getConfiguration("tuskPhpLsp");
   const serverOptions: ServerOptions = { command: serverPath, args: ["--transport", "stdio"], transport: TransportKind.stdio };
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ scheme: "file", language: "php" }],
+    documentSelector: [
+      { scheme: "file", language: "php" },
+      // The pattern restriction is critical: without it every JSON file
+      // in the workspace would route to our server.
+      { scheme: "file", language: "json", pattern: "**/composer.json" },
+    ],
     synchronize: { fileEvents: [workspace.createFileSystemWatcher("**/*.php"), workspace.createFileSystemWatcher("**/composer.json")] },
     outputChannel,
     initializationOptions: {
@@ -195,6 +200,12 @@ async function startServer(context: ExtensionContext) {
       excludePaths: config.get("excludePaths", ["vendor", "node_modules", ".git"]),
       phpManualLocale: config.get("phpManual.locale", ""),
       phpManualOpenOnDefinition: config.get("phpManual.openOnDefinition", false),
+      composer: {
+        hover: {
+          enable: config.get("composer.hover.enable", true),
+        },
+        openOnDefinition: config.get("composer.openOnDefinition", false),
+      },
     },
   };
   const nextClient = new LanguageClient("tuskPhpLsp", "Tusk PHP LSP", serverOptions, clientOptions);
