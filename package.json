@@ -8,11 +8,11 @@
   "icon": "icon.png",
   "homepage": "https://github.com/Tusk-PHP/lsp",
   "bugs": {
-    "url": "https://github.com/Tusk-PHP/lsp/issues"
+    "url": "https://github.com/Tusk-PHP/vscode/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Tusk-PHP/lsp.git"
+    "url": "https://github.com/Tusk-PHP/vscode.git"
   },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Programming Languages", "Linters"],

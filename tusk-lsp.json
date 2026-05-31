@@ -1,0 +1,13 @@
+{
+  "_comment": "Pins the Tusk PHP LSP binary version this VS Code extension bundles and is tested against. The release workflow downloads tusk-php-<os>-<arch> from https://github.com/Tusk-PHP/lsp/releases/tag/<version> (LSP tags have no leading 'v') into bin/<os>-<arch>/tusk-php and verifies each against the sha256 sums below. Fill the TODO sums from that release's checksums. Bump deliberately after compatibility testing.",
+  "lsp": {
+    "version": "0.8.0",
+    "sha256": {
+      "darwin-arm64": "TODO",
+      "darwin-amd64": "TODO",
+      "linux-amd64": "TODO",
+      "linux-arm64": "TODO",
+      "windows-amd64": "TODO"
+    }
+  }
+}

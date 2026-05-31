@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Compile
+        run: bun run compile
+
+      # Download the pinned LSP binaries declared in tusk-lsp.json into
+      # bin/<os>-<arch>/tusk-php. These directory + file names must match what
+      # src/extension.ts expects when it resolves the bundled binary.
+      #
+      # Verification is fail-closed: every platform MUST have a real SHA-256 in
+      # tusk-lsp.json (no "TODO"/null) or the release aborts. Fill the sums from
+      # the upstream release's checksums before tagging.
+      - name: Download and verify pinned LSP binaries
+        run: |
+          set -euo pipefail
+          lsp_version=$(jq -r '.lsp.version' tusk-lsp.json)
+          # LSP release tags have no leading "v".
+          base="https://github.com/Tusk-PHP/lsp/releases/download/${lsp_version}"
+          for platform in darwin-arm64 darwin-amd64 linux-amd64 linux-arm64 windows-amd64; do
+            asset="tusk-php-${platform}"
+            out="bin/${platform}/tusk-php"
+            if [ "$platform" = "windows-amd64" ]; then
+              asset="${asset}.exe"
+              out="${out}.exe"
+            fi
+            expected=$(jq -r --arg p "$platform" '.lsp.sha256[$p]' tusk-lsp.json)
+            if [ "$expected" = "TODO" ] || [ "$expected" = "null" ] || [ -z "$expected" ]; then
+              echo "Missing sha256 pin for ${platform} in tusk-lsp.json — refusing to release unverified binaries" >&2
+              exit 1
+            fi
+            mkdir -p "bin/${platform}"
+            echo "Downloading ${asset} -> ${out}"
+            curl -fsSL "${base}/${asset}" -o "${out}"
+            chmod +x "${out}"
+            echo "${expected}  ${out}" | sha256sum -c -
+          done
+
+      - name: Package (.vsix)
+        run: bun run package
+
+      - name: Publish to VS Marketplace
+        if: ${{ env.VSCE_PAT != '' }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: bun x @vscode/vsce publish --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        if: ${{ env.OVSX_PAT != '' }}
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: bun x ovsx publish --pat "$OVSX_PAT"
+
+      - name: Attach .vsix to GitHub release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          files: '*.vsix'
+          generate_release_notes: true
