@@ -3,11 +3,11 @@
   "lsp": {
     "version": "0.8.0",
     "sha256": {
-      "darwin-arm64": "TODO",
-      "darwin-amd64": "TODO",
-      "linux-amd64": "TODO",
-      "linux-arm64": "TODO",
-      "windows-amd64": "TODO"
+      "darwin-amd64": "sha256:0b5721acee5cbde24bc2cb7416978ad3c1bf7c163560ab44c93c4c9bed39fcad",
+      "darwin-arm64": "sha256:aa2260ff9aa524f119db143f8dffee004260b8bc42fe3e4496a769a09fb80e9b",
+      "linux-amd64": "sha256:ec81d16f8dd88f0d47245cdb1842880d49abe7343c92948ac51741d65ac97e4e",
+      "linux-arm64": "sha256:2ae831a6266446962c78017de8c8cf1e0f03bf3c299aa79f46e908ef57552d4a",
+      "windows-amd64": "sha256:075858f6e6abc326bad7f9c8f1596dcf4c9f82968d81e12fa159e9f44eb58086"
     }
   }
 }
