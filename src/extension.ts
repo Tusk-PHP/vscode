@@ -198,13 +198,15 @@ function downloadFile(url: string, destPath: string, maxRedirects = 5): Promise<
         const hash = crypto.createHash("sha256");
         const out = fs.createWriteStream(destPath);
 
-        res.on("data", (chunk: Buffer) => {
-          hash.update(chunk);
-        });
-
+        // Pipe into both the hash stream and the file stream so every byte
+        // written to disk is also hashed (Fix 3).
+        res.pipe(hash, { end: false });
         res.pipe(out);
 
-        out.on("finish", () => {
+        // Resolve on "close" (fd fully flushed and closed) rather than
+        // "finish" (merely flushed) to avoid races on subsequent chmod/exec
+        // on Windows (Fix 4).
+        out.on("close", () => {
           resolve(hash.digest("hex"));
         });
 
@@ -253,8 +255,21 @@ async function findServerBinary(context: ExtensionContext): Promise<string | und
     if (process.platform !== "win32") {
       try { fs.chmodSync(bundled, 0o755); } catch {}
     }
-    outputChannel.appendLine(`Using bundled binary: ${bundled}`);
-    return bundled;
+    if (pin) {
+      const bundledVersion = await getBinaryVersion(bundled);
+      if (bundledVersion !== undefined && bundledVersion.includes(pin.version)) {
+        outputChannel.appendLine(`Using bundled binary (version ${pin.version}): ${bundled}`);
+        return bundled;
+      } else {
+        outputChannel.appendLine(
+          `Bundled binary version mismatch (got "${bundledVersion ?? "unknown"}", want "${pin.version}") — falling through to cache/download`
+        );
+        // Fall through to cached/download path
+      }
+    } else {
+      outputChannel.appendLine(`Using bundled binary: ${bundled}`);
+      return bundled;
+    }
   }
 
   // Step 3: Cached download in global storage
@@ -322,7 +337,11 @@ async function findServerBinary(context: ExtensionContext): Promise<string | und
     // Binary is on PATH
     if (pin && !versionOut.includes(pin.version)) {
       outputChannel.appendLine(
-        `WARNING: tusk-php on PATH reports "${versionOut}" but pinned version is "${pin.version}" — using it anyway`
+        `WARNING: tusk-php on PATH reports "${versionOut}" but pinned version is "${pin.version}" — version mismatch`
+      );
+      void window.showWarningMessage(
+        `Tusk PHP: tusk-php on PATH is version "${versionOut}" but the extension expects "${pin.version}". ` +
+        `Please update tusk-php to avoid compatibility issues.`
       );
     } else {
       outputChannel.appendLine(`Using tusk-php from PATH`);
