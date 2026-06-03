@@ -1,7 +1,6 @@
 src/**
 .github/**
 tsconfig.json
-tusk-lsp.json
 *.vsix
 *.tsbuildinfo
 bun.lock

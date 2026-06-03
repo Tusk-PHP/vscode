@@ -1,5 +1,8 @@
 import * as path from "path";
 import * as fs from "fs";
+import * as https from "https";
+import * as crypto from "crypto";
+import { execFile } from "child_process";
 import { workspace, ExtensionContext, commands, window, OutputChannel, env, WorkspaceEdit as VSWorkspaceEdit, Uri, Range as VSRange, Position as VSPosition } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions, State, TransportKind } from "vscode-languageclient/node";
 
@@ -132,21 +135,120 @@ async function executeMoveToNamespace(uri: string, targetNS: string): Promise<bo
   return workspace.applyEdit(wsEdit);
 }
 
-function findServerBinary(context: ExtensionContext): string {
+/** Read tusk-lsp.json pin info; returns undefined if unreadable. */
+function readLspPin(context: ExtensionContext): { version: string; sha256: Record<string, string> } | undefined {
+  try {
+    const raw = fs.readFileSync(path.join(context.extensionPath, "tusk-lsp.json"), "utf8");
+    const json = JSON.parse(raw) as { lsp?: { version?: string; sha256?: Record<string, string> } };
+    const lsp = json?.lsp;
+    if (lsp?.version && lsp?.sha256) {
+      return { version: lsp.version, sha256: lsp.sha256 };
+    }
+  } catch {
+    outputChannel.appendLine("Tusk PHP: could not read tusk-lsp.json — skipping version check and download");
+  }
+  return undefined;
+}
+
+/** Run a binary with --version and return trimmed stdout, or undefined on failure. */
+function getBinaryVersion(binaryPath: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    execFile(binaryPath, ["--version"], { timeout: 5000 }, (err, stdout) => {
+      if (err) {
+        resolve(undefined);
+      } else {
+        resolve(stdout.trim());
+      }
+    });
+  });
+}
+
+/** Download a URL to destPath, following up to maxRedirects redirects. Returns the SHA-256 hex digest. */
+function downloadFile(url: string, destPath: string, maxRedirects = 5): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const attempt = (currentUrl: string, hopsLeft: number) => {
+      https.get(currentUrl, (res) => {
+        const { statusCode, headers } = res;
+
+        if (statusCode !== undefined && [301, 302, 303, 307, 308].includes(statusCode)) {
+          if (hopsLeft <= 0) {
+            res.destroy();
+            reject(new Error(`Too many redirects downloading ${url}`));
+            return;
+          }
+          const location = headers["location"];
+          if (!location) {
+            res.destroy();
+            reject(new Error(`Redirect with no location header from ${currentUrl}`));
+            return;
+          }
+          res.destroy();
+          attempt(location, hopsLeft - 1);
+          return;
+        }
+
+        if (!statusCode || statusCode < 200 || statusCode >= 300) {
+          res.destroy();
+          // Clean up any partial file
+          try { fs.unlinkSync(destPath); } catch {}
+          reject(new Error(`HTTP ${statusCode ?? "unknown"} downloading ${url}`));
+          return;
+        }
+
+        const hash = crypto.createHash("sha256");
+        const out = fs.createWriteStream(destPath);
+
+        res.on("data", (chunk: Buffer) => {
+          hash.update(chunk);
+        });
+
+        res.pipe(out);
+
+        out.on("finish", () => {
+          resolve(hash.digest("hex"));
+        });
+
+        out.on("error", (err) => {
+          try { fs.unlinkSync(destPath); } catch {}
+          reject(err);
+        });
+
+        res.on("error", (err) => {
+          try { fs.unlinkSync(destPath); } catch {}
+          reject(err);
+        });
+      }).on("error", (err) => {
+        reject(err);
+      });
+    };
+
+    attempt(url, maxRedirects);
+  });
+}
+
+async function findServerBinary(context: ExtensionContext): Promise<string | undefined> {
+  const platformMap: Record<string, string> = { darwin: "darwin", linux: "linux", win32: "windows" };
+  const archMap: Record<string, string> = { x64: "amd64", arm64: "arm64" };
+  const goos = platformMap[process.platform] ?? process.platform;
+  const goarch = archMap[process.arch] ?? process.arch;
+  const ext = process.platform === "win32" ? ".exe" : "";
+  const platformKey = `${goos}-${goarch}`;
+
+  const pin = readLspPin(context);
+
+  // Step 1: Configured override
   const configPath = workspace.getConfiguration("tuskPhpLsp").get<string>("executablePath", "");
   if (configPath) {
     if (fs.existsSync(configPath)) {
       outputChannel.appendLine(`Using configured binary: ${configPath}`);
       return configPath;
     }
-    outputChannel.appendLine(`Configured binary not found: ${configPath}`);
+    outputChannel.appendLine(`Configured binary not found: ${configPath} — falling back to bundled/cached/PATH`);
+    // Fall through intentionally; do NOT exec a missing path
   }
-  const platformMap: Record<string, string> = { darwin: "darwin", linux: "linux", win32: "windows" };
-  const archMap: Record<string, string> = { x64: "amd64", arm64: "arm64" };
-  const goos = platformMap[process.platform] ?? process.platform;
-  const goarch = archMap[process.arch] ?? process.arch;
-  const ext = process.platform === "win32" ? ".exe" : "";
-  const bundled = path.join(context.extensionPath, "bin", `${goos}-${goarch}`, `tusk-php${ext}`);
+
+  // Step 2: Bundled binary under extensionPath
+  const bundled = path.join(context.extensionPath, "bin", platformKey, `tusk-php${ext}`);
   if (fs.existsSync(bundled)) {
     if (process.platform !== "win32") {
       try { fs.chmodSync(bundled, 0o755); } catch {}
@@ -154,9 +256,82 @@ function findServerBinary(context: ExtensionContext): string {
     outputChannel.appendLine(`Using bundled binary: ${bundled}`);
     return bundled;
   }
-  const fallback = `tusk-php${ext}`;
-  outputChannel.appendLine(`Falling back to PATH: ${fallback}`);
-  return fallback;
+
+  // Step 3: Cached download in global storage
+  const cacheDir = path.join(context.globalStorageUri.fsPath, "bin", platformKey);
+  const cachedBin = path.join(cacheDir, `tusk-php${ext}`);
+
+  if (fs.existsSync(cachedBin)) {
+    if (pin) {
+      const versionOut = await getBinaryVersion(cachedBin);
+      const versionMatches = versionOut !== undefined && versionOut.includes(pin.version);
+      if (versionMatches) {
+        outputChannel.appendLine(`Using cached binary (version ${pin.version}): ${cachedBin}`);
+        return cachedBin;
+      } else {
+        outputChannel.appendLine(
+          `Cached binary version mismatch (got "${versionOut ?? "unknown"}", want "${pin.version}") — re-downloading`
+        );
+        // Fall through to download
+      }
+    } else {
+      // No pin available; use cache as-is
+      outputChannel.appendLine(`Using cached binary (no pin available): ${cachedBin}`);
+      return cachedBin;
+    }
+  }
+
+  // Step 4: Download from GitHub releases
+  if (pin) {
+    const rawSum = pin.sha256[platformKey];
+    if (!rawSum) {
+      outputChannel.appendLine(`Tusk PHP: no SHA-256 pin for platform "${platformKey}" — skipping download`);
+    } else {
+      const expectedSum = rawSum.replace(/^sha256:/i, "").toLowerCase();
+      const assetName = `tusk-php-${platformKey}${ext}`;
+      const downloadUrl = `https://github.com/Tusk-PHP/lsp/releases/download/${pin.version}/${assetName}`;
+
+      outputChannel.appendLine(`Downloading Tusk PHP LSP ${pin.version} for ${platformKey}…`);
+      try {
+        fs.mkdirSync(cacheDir, { recursive: true });
+        const actualSum = await downloadFile(downloadUrl, cachedBin);
+
+        if (actualSum.toLowerCase() !== expectedSum) {
+          outputChannel.appendLine(
+            `Tusk PHP: SHA-256 mismatch for downloaded binary (got ${actualSum}, expected ${expectedSum}) — discarding`
+          );
+          try { fs.unlinkSync(cachedBin); } catch {}
+        } else {
+          if (process.platform !== "win32") {
+            try { fs.chmodSync(cachedBin, 0o755); } catch {}
+          }
+          outputChannel.appendLine(`Downloaded and verified binary: ${cachedBin}`);
+          return cachedBin;
+        }
+      } catch (err) {
+        outputChannel.appendLine(`Tusk PHP: download failed — ${formatError(err)}`);
+        try { fs.unlinkSync(cachedBin); } catch {}
+      }
+    }
+  }
+
+  // Step 5: PATH fallback
+  const pathBin = `tusk-php${ext}`;
+  const versionOut = await getBinaryVersion(pathBin);
+  if (versionOut !== undefined) {
+    // Binary is on PATH
+    if (pin && !versionOut.includes(pin.version)) {
+      outputChannel.appendLine(
+        `WARNING: tusk-php on PATH reports "${versionOut}" but pinned version is "${pin.version}" — using it anyway`
+      );
+    } else {
+      outputChannel.appendLine(`Using tusk-php from PATH`);
+    }
+    return pathBin;
+  }
+
+  // Nothing resolved
+  return undefined;
 }
 
 function runTransition(action: () => Promise<void>): Promise<void> {
@@ -172,7 +347,13 @@ function formatError(err: unknown): string {
 
 async function startServer(context: ExtensionContext) {
   if (client) return;
-  const serverPath = findServerBinary(context);
+  const serverPath = await findServerBinary(context);
+  if (!serverPath) {
+    window.showErrorMessage(
+      "Tusk PHP: language server binary not found. Install `tusk-php` on your PATH, or set `tuskPhpLsp.executablePath`."
+    );
+    return;
+  }
   const config = workspace.getConfiguration("tuskPhpLsp");
   const serverOptions: ServerOptions = { command: serverPath, args: ["--transport", "stdio"], transport: TransportKind.stdio };
   const clientOptions: LanguageClientOptions = {
