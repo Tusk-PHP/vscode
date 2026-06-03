@@ -19,6 +19,7 @@
   "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
   "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
   "main": "./out/extension.js",
+  "extensionKind": ["workspace"],
   "contributes": {
     "configuration": {
       "title": "Tusk PHP LSP",
