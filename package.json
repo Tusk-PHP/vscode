@@ -69,7 +69,11 @@
       { "command": "tuskPhpLsp.moveToNamespace", "title": "Tusk PHP: Move to Namespace..." }
     ]
   },
-  "scripts": { "compile": "tsc -p ./", "watch": "tsc -watch -p ./" },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "bun x @vscode/vsce package"
+  },
   "dependencies": { "vscode-languageclient": "^9.0.1" },
   "devDependencies": { "@types/node": "^20.11.0", "@types/vscode": "^1.85.0", "typescript": "^5.3.0" }
 }
