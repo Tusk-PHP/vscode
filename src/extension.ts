@@ -22,56 +22,6 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(commands.registerCommand("tuskPhpLsp.restart", () => restartServer(context)));
   context.subscriptions.push(commands.registerCommand("tuskPhpLsp.reindex", () => { client?.sendNotification("tuskPhpLsp/reindex"); window.showInformationMessage("Tusk PHP LSP: Re-indexing..."); }));
 
-  // Copy Namespace — copies FQN to clipboard
-  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.copyNamespace", async (...args: unknown[]) => {
-    if (!client) return;
-    const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
-    if (!uri) return;
-    try {
-      const ns = await client.sendRequest<string>("workspace/executeCommand", { command: "tuskPhpLsp.copyNamespace", arguments: [uri] });
-      if (ns) {
-        await env.clipboard.writeText(ns);
-        window.showInformationMessage(`Copied: ${ns}`);
-      }
-    } catch (err) {
-      outputChannel.appendLine(`copyNamespace error: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }));
-
-  // Move to Namespace — prompts for target, sends to server
-  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.moveToNamespace", async (...args: unknown[]) => {
-    if (!client) return;
-    const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
-    if (!uri) return;
-
-    // Pre-fill with current namespace
-    let currentNs = "";
-    try {
-      const fqn = await client.sendRequest<string>("workspace/executeCommand", { command: "tuskPhpLsp.copyNamespace", arguments: [uri] });
-      if (fqn) {
-        const sep = fqn.lastIndexOf("\\");
-        currentNs = sep > 0 ? fqn.substring(0, sep) : fqn;
-      }
-    } catch { /* ignore */ }
-
-    const targetNS = await window.showInputBox({
-      prompt: "Enter the target namespace",
-      value: currentNs,
-      placeHolder: "App\\Domain\\Models",
-      validateInput: (v) => v.trim() === "" ? "Namespace cannot be empty" : undefined,
-    });
-    if (!targetNS) return;
-
-    try {
-      const applied = await executeMoveToNamespace(uri, targetNS);
-      if (applied) {
-        window.showInformationMessage(`Moved to namespace ${targetNS}`);
-      }
-    } catch (err) {
-      window.showErrorMessage(`Move to namespace failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }));
-
   // Auto-update namespace when a PHP file is moved/renamed in the file explorer
   context.subscriptions.push(workspace.onDidRenameFiles(async (e) => {
     if (!client) return;
@@ -405,6 +355,54 @@ async function startServer(context: ExtensionContext) {
           enable: config.get("composer.hover.enable", true),
         },
         openOnDefinition: config.get("composer.openOnDefinition", false),
+      },
+    },
+    middleware: {
+      executeCommand: async (command, args, next) => {
+        if (command === "tuskPhpLsp.copyNamespace") {
+          const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
+          if (!uri) return;
+          try {
+            const ns = await next(command, [uri]) as string;
+            if (ns) {
+              await env.clipboard.writeText(ns);
+              window.showInformationMessage(`Copied: ${ns}`);
+            }
+            return ns;
+          } catch (err) {
+            outputChannel.appendLine(`copyNamespace error: ${err instanceof Error ? err.message : String(err)}`);
+          }
+          return;
+        }
+        if (command === "tuskPhpLsp.moveToNamespace") {
+          const uri = (args.length > 0 && typeof args[0] === "string") ? args[0] : window.activeTextEditor?.document.uri.toString();
+          if (!uri) return;
+          let currentNs = "";
+          try {
+            const fqn = await next("tuskPhpLsp.copyNamespace", [uri]) as string;
+            if (fqn) {
+              const sep = fqn.lastIndexOf("\\");
+              currentNs = sep > 0 ? fqn.substring(0, sep) : fqn;
+            }
+          } catch { /* ignore */ }
+          const targetNS = await window.showInputBox({
+            prompt: "Enter the target namespace",
+            value: currentNs,
+            placeHolder: "App\\Domain\\Models",
+            validateInput: (v) => v.trim() === "" ? "Namespace cannot be empty" : undefined,
+          });
+          if (!targetNS) return;
+          try {
+            const applied = await executeMoveToNamespace(uri, targetNS);
+            if (applied) {
+              window.showInformationMessage(`Moved to namespace ${targetNS}`);
+            }
+          } catch (err) {
+            window.showErrorMessage(`Move to namespace failed: ${err instanceof Error ? err.message : String(err)}`);
+          }
+          return;
+        }
+        return next(command, args);
       },
     },
   };
