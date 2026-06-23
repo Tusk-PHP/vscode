@@ -16,6 +16,7 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(outputChannel);
   const config = workspace.getConfiguration("tuskPhpLsp");
   if (!config.get<boolean>("enable", true)) return;
+  void maybeShowReleaseNotes(context);
   void runTransition(async () => {
     await startServer(context);
   });
@@ -58,6 +59,38 @@ export function activate(context: ExtensionContext) {
       }
     }
   }));
+}
+
+/** globalState key holding the last extension version the user was shown release notes for. */
+const RELEASE_NOTES_KEY = "tuskPhpLsp.lastSeenVersion";
+
+/**
+ * Show a one-time "what's new" prompt after the extension is upgraded. On a version
+ * change we surface an info message linking to the bundled CHANGELOG.md (which itself
+ * links to the language-server changelog). First installs stay quiet — we only record
+ * the version so the next upgrade prompts once. VS Code only; Zed has no equivalent.
+ */
+async function maybeShowReleaseNotes(context: ExtensionContext): Promise<void> {
+  try {
+    const current = (context.extension.packageJSON as { version?: string })?.version;
+    if (!current) return;
+    const previous = context.globalState.get<string>(RELEASE_NOTES_KEY);
+    // Record the current version up front so we prompt at most once per upgrade,
+    // even if the user dismisses the message.
+    await context.globalState.update(RELEASE_NOTES_KEY, current);
+    // First install (nothing recorded) or no change: don't nag.
+    if (!previous || previous === current) return;
+    const action = await window.showInformationMessage(
+      `Tusk PHP updated to ${current}.`,
+      "See what's new"
+    );
+    if (action === "See what's new") {
+      const changelog = Uri.file(path.join(context.extensionPath, "CHANGELOG.md"));
+      await commands.executeCommand("markdown.showPreview", changelog);
+    }
+  } catch (err) {
+    outputChannel.appendLine(`Release-notes check failed: ${formatError(err)}`);
+  }
 }
 
 /** Send moveToNamespace to the server and apply the returned WorkspaceEdit. */
