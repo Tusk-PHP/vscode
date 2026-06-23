@@ -14,7 +14,9 @@
     "type": "git",
     "url": "https://github.com/Tusk-PHP/vscode.git"
   },
-  "engines": { "vscode": "^1.85.0" },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
   "categories": ["Programming Languages", "Linters"],
   "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
   "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
@@ -24,21 +26,83 @@
     "configuration": {
       "title": "Tusk PHP LSP",
       "properties": {
-        "tuskPhpLsp.enable": { "type": "boolean", "default": true, "description": "Enable/disable the Tusk PHP LSP extension" },
-        "tuskPhpLsp.executablePath": { "type": "string", "default": "", "description": "Custom path to the tusk-php binary" },
-        "tuskPhpLsp.phpVersion": { "type": "string", "default": "8.5", "enum": ["8.0","8.1","8.2","8.3","8.4","8.5"], "description": "Target PHP version for analysis" },
-        "tuskPhpLsp.framework": { "type": "string", "default": "auto", "enum": ["auto","laravel","symfony","none"], "description": "Framework to use for container-aware intelligence" },
-        "tuskPhpLsp.containerAware": { "type": "boolean", "default": true, "description": "Enable container-aware completions and analysis" },
-        "tuskPhpLsp.diagnostics.enable": { "type": "boolean", "default": true, "description": "Enable diagnostics (static checks, PHPStan, Pint)" },
-        "tuskPhpLsp.diagnostics.phpstan.enable": { "type": "boolean", "default": true, "description": "Enable PHPStan analysis on save" },
-        "tuskPhpLsp.diagnostics.phpstan.path": { "type": "string", "default": "", "description": "Custom path to PHPStan binary (auto-detects vendor/bin/phpstan)" },
-        "tuskPhpLsp.diagnostics.phpstan.level": { "type": "string", "default": "", "description": "PHPStan analysis level (uses project config if empty)" },
-        "tuskPhpLsp.diagnostics.phpstan.configPath": { "type": "string", "default": "", "description": "Custom path to phpstan.neon config file" },
-        "tuskPhpLsp.diagnostics.pint.enable": { "type": "boolean", "default": true, "description": "Enable Laravel Pint analysis on save" },
-        "tuskPhpLsp.diagnostics.pint.path": { "type": "string", "default": "", "description": "Custom path to Pint binary (auto-detects vendor/bin/pint)" },
-        "tuskPhpLsp.diagnostics.pint.configPath": { "type": "string", "default": "", "description": "Custom path to pint.json config file" },
-        "tuskPhpLsp.maxIndexFiles": { "type": "number", "default": 10000, "description": "Maximum number of PHP files to index" },
-        "tuskPhpLsp.excludePaths": { "type": "array", "default": ["vendor","node_modules",".git","storage","var/cache"], "description": "Paths to exclude from indexing" },
+        "tuskPhpLsp.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the Tusk PHP LSP extension"
+        },
+        "tuskPhpLsp.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to the tusk-php binary"
+        },
+        "tuskPhpLsp.phpVersion": {
+          "type": "string",
+          "default": "8.5",
+          "enum": ["8.0", "8.1", "8.2", "8.3", "8.4", "8.5"],
+          "description": "Target PHP version for analysis"
+        },
+        "tuskPhpLsp.framework": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "laravel", "symfony", "none"],
+          "description": "Framework to use for container-aware intelligence"
+        },
+        "tuskPhpLsp.containerAware": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable container-aware completions and analysis"
+        },
+        "tuskPhpLsp.diagnostics.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable diagnostics (static checks, PHPStan, Pint)"
+        },
+        "tuskPhpLsp.diagnostics.phpstan.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable PHPStan analysis on save"
+        },
+        "tuskPhpLsp.diagnostics.phpstan.path": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to PHPStan binary (auto-detects vendor/bin/phpstan)"
+        },
+        "tuskPhpLsp.diagnostics.phpstan.level": {
+          "type": "string",
+          "default": "",
+          "description": "PHPStan analysis level (uses project config if empty)"
+        },
+        "tuskPhpLsp.diagnostics.phpstan.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to phpstan.neon config file"
+        },
+        "tuskPhpLsp.diagnostics.pint.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Laravel Pint analysis on save"
+        },
+        "tuskPhpLsp.diagnostics.pint.path": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to Pint binary (auto-detects vendor/bin/pint)"
+        },
+        "tuskPhpLsp.diagnostics.pint.configPath": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to pint.json config file"
+        },
+        "tuskPhpLsp.maxIndexFiles": {
+          "type": "number",
+          "default": 1e4,
+          "description": "Maximum number of PHP files to index"
+        },
+        "tuskPhpLsp.excludePaths": {
+          "type": "array",
+          "default": ["vendor", "node_modules", ".git", "storage", "var/cache"],
+          "description": "Paths to exclude from indexing"
+        },
         "tuskPhpLsp.phpManual.locale": {
           "type": "string",
           "default": "",
@@ -63,17 +127,37 @@
       }
     },
     "commands": [
-      { "command": "tuskPhpLsp.restart", "title": "Tusk PHP: Restart Server" },
-      { "command": "tuskPhpLsp.reindex", "title": "Tusk PHP: Re-index Workspace" },
-      { "command": "tuskPhpLsp.copyNamespace", "title": "Tusk PHP: Copy Namespace" },
-      { "command": "tuskPhpLsp.moveToNamespace", "title": "Tusk PHP: Move to Namespace..." }
+      {
+        "command": "tuskPhpLsp.restart",
+        "title": "Tusk PHP: Restart Server"
+      },
+      {
+        "command": "tuskPhpLsp.reindex",
+        "title": "Tusk PHP: Re-index Workspace"
+      },
+      {
+        "command": "tuskPhpLsp.copyNamespace",
+        "title": "Tusk PHP: Copy Namespace"
+      },
+      {
+        "command": "tuskPhpLsp.moveToNamespace",
+        "title": "Tusk PHP: Move to Namespace..."
+      }
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "bun x @vscode/vsce package"
+    "compile": "tsc -p ./ --noEmit",
+    "bundle": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "bun run bundle -- --watch",
+    "package": "bun run bundle -- --minify && bun x @vscode/vsce package"
   },
-  "dependencies": { "vscode-languageclient": "^9.0.1" },
-  "devDependencies": { "@types/node": "^20.11.0", "@types/vscode": "^1.85.0", "typescript": "^5.3.0" }
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.3.0"
+  }
 }

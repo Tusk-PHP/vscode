@@ -1,9 +1,12 @@
 src/**
 .github/**
+.claude/**
+docs/**
+CLAUDE.md
+CONTRIBUTING.md
 tsconfig.json
 *.vsix
 *.tsbuildinfo
 bun.lock
-node_modules/.package-lock.json
-node_modules/typescript/**
-node_modules/@types/**
+node_modules/**
+out/**.js.map
