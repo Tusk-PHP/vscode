@@ -74,3 +74,25 @@ jobs:
         with:
           files: '*.vsix'
           generate_release_notes: true
+
+  # Telegram announcements only run from Tusk-PHP/lsp for now. Uncomment to
+  # announce extension releases too.
+  # announce:
+  #   needs: release
+  #   if: ${{ github.event_name == 'push' && !contains(github.ref_name, '-') }}
+  #   permissions:
+  #     contents: read
+  #   uses: Pepebits/release-announce/.github/workflows/announce.yml@v1
+  #   with:
+  #     tag: ${{ github.ref_name }}
+  #     project_name: Tusk PHP for VS Code
+  #     notes_source: changelog
+  #     install_title: 🧩 VS Code
+  #     install_command: code --install-extension open-southeners.tusk-php@{version}
+  #     buttons: >-
+  #       [{"text": "📝 Notes", "url": "{repo_url}/releases/tag/{tag}"},
+  #        {"text": "🛒 Marketplace", "url": "https://marketplace.visualstudio.com/items?itemName=open-southeners.tusk-php"},
+  #        {"text": "📦 Open VSX", "url": "https://open-vsx.org/extension/open-southeners/tusk-php/{version}"}]
+  #   secrets:
+  #     TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  #     TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
