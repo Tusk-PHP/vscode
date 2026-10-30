@@ -222,8 +222,11 @@ async function maybeShowReleaseNotes(context: ExtensionContext): Promise<void> {
       "See what's new"
     );
     if (action === "See what's new") {
-      const changelog = Uri.file(path.join(context.extensionPath, "CHANGELOG.md"));
-      await commands.executeCommand("markdown.showPreview", changelog);
+      // vsce lowercases the file's name in the package; a dev checkout keeps it as is.
+      const name = ["changelog.md", "CHANGELOG.md"].find((n) => fs.existsSync(path.join(context.extensionPath, n)));
+      if (name) {
+        await commands.executeCommand("markdown.showPreview", Uri.file(path.join(context.extensionPath, name)));
+      }
     }
   } catch (err) {
     outputChannel.appendLine(`Release-notes check failed: ${formatError(err)}`);

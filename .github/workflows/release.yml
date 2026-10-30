@@ -52,6 +52,8 @@ jobs:
               echo "Missing sha256 pin for ${platform} in tusk-lsp.json — refusing to release unverified binaries" >&2
               exit 1
             fi
+            # Pins are written as "sha256:<hex>"; sha256sum wants the bare hex.
+            expected="${expected#sha256:}"
             mkdir -p "bin/${platform}"
             echo "Downloading ${asset} -> ${out}"
             curl -fsSL "${base}/${asset}" -o "${out}"
