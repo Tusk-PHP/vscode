@@ -1,13 +1,13 @@
 {
   "_comment": "Pins the Tusk PHP LSP binary version this VS Code extension bundles and is tested against. The release workflow downloads tusk-php-<os>-<arch> from https://github.com/Tusk-PHP/lsp/releases/tag/<version> (LSP tags have no leading 'v') into bin/<os>-<arch>/tusk-php and verifies each against the sha256 sums below. Fill the TODO sums from that release's checksums. Bump deliberately after compatibility testing.",
   "lsp": {
-    "version": "0.8.0",
+    "version": "0.9.0",
     "sha256": {
-      "darwin-amd64": "sha256:0b5721acee5cbde24bc2cb7416978ad3c1bf7c163560ab44c93c4c9bed39fcad",
-      "darwin-arm64": "sha256:aa2260ff9aa524f119db143f8dffee004260b8bc42fe3e4496a769a09fb80e9b",
-      "linux-amd64": "sha256:ec81d16f8dd88f0d47245cdb1842880d49abe7343c92948ac51741d65ac97e4e",
-      "linux-arm64": "sha256:2ae831a6266446962c78017de8c8cf1e0f03bf3c299aa79f46e908ef57552d4a",
-      "windows-amd64": "sha256:075858f6e6abc326bad7f9c8f1596dcf4c9f82968d81e12fa159e9f44eb58086"
+      "darwin-amd64": "sha256:61ea323a99c5906e56aa8e7212c5649450e82296444d5eba2309438a34aa225a",
+      "darwin-arm64": "sha256:57cfe33f39d0443cfb31054bcdb2cf4a9c2f8209225c68eced0fbf9f97f3dab7",
+      "linux-amd64": "sha256:5fad00b94d1345f0b7a3b83ef37b4bdd630f3120c676db19a59e2bf060cb30c6",
+      "linux-arm64": "sha256:e0adb1c8fd91b11eefdfdf7ce68228d3a13c9727dbc4b7f1ff640c966e7dd03d",
+      "windows-amd64": "sha256:b9f6705785da8bfa8c76bd8b1559cceca3e70fec6829f43b25411cf3e856acd3"
     }
   }
 }

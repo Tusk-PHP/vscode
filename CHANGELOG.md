@@ -21,7 +21,7 @@ This changelog is written for people installing the extension; it does not follo
 ## [0.9.0] - 2026-06-22
 
 Bundles **Tusk PHP language server 0.9.0** —
-[what's new in the server](https://github.com/Tusk-PHP/lsp/blob/main/CHANGELOG.md).
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.9.0).
 
 - **Namespace commands** — *Copy Namespace* and *Move to Namespace…*, plus an automatic
   prompt to update a file's namespace when you move or rename it in the explorer.
