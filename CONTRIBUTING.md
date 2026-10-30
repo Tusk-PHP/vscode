@@ -10,7 +10,7 @@ diagnostic, completion, or hover, that's usually where the change belongs.
 ## Prerequisites
 
 - [Bun](https://bun.sh) (used for install, type-checking, bundling, and packaging)
-- VS Code `^1.85.0`
+- VS Code `^1.88.0`
 - A `tusk-php` server binary — either the pinned release (auto-downloaded) or a local
   build of the LSP (see [Pairing with a local tusk-php](#pairing-with-a-local-tusk-php))
 

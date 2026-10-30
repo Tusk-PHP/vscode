@@ -3,13 +3,22 @@ import * as fs from "fs";
 import * as https from "https";
 import * as crypto from "crypto";
 import { execFile } from "child_process";
-import { workspace, ExtensionContext, commands, window, OutputChannel, env, WorkspaceEdit as VSWorkspaceEdit, Uri, Range as VSRange, Position as VSPosition } from "vscode";
+import { workspace, ExtensionContext, commands, extensions, tests, window, OutputChannel, env, WorkspaceEdit as VSWorkspaceEdit, Uri, Range as VSRange, Position as VSPosition, CancellationToken, DeclarationCoverage, FileCoverage, FileCoverageDetail, StatementCoverage, TestController, TestCoverageCount, TestRunProfile, TestRunProfileKind, TestRunRequest } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions, State, TransportKind } from "vscode-languageclient/node";
 
 let client: LanguageClient | undefined;
 let clientStart: Promise<void> | undefined;
 let lifecycle: Promise<void> = Promise.resolve();
 let outputChannel: OutputChannel;
+
+/** The test controller that shows the coverage report. Created once the server offers coverage. */
+let coverageController: TestController | undefined;
+let coverageProfile: TestRunProfile | undefined;
+let coverageQueue: Promise<void> = Promise.resolve();
+/** What the last coverage run showed, so unchanged reports don't start new runs. */
+let shownCoverage: { key: string; files: Set<string> } | undefined;
+/** Whether new reports replace what the Test Coverage view shows without being asked. */
+let coverageFollowsReports = true;
 
 export function activate(context: ExtensionContext) {
   outputChannel = window.createOutputChannel("Tusk PHP LSP");
@@ -22,6 +31,16 @@ export function activate(context: ExtensionContext) {
   });
   context.subscriptions.push(commands.registerCommand("tuskPhpLsp.restart", () => restartServer(context)));
   context.subscriptions.push(commands.registerCommand("tuskPhpLsp.reindex", () => { client?.sendNotification("tuskPhpLsp/reindex"); window.showInformationMessage("Tusk PHP LSP: Re-indexing..."); }));
+  context.subscriptions.push(commands.registerCommand("tuskPhpLsp.showCoverage", () => refreshCoverage(context, true)));
+
+  // PHPUnit's extension shows coverage from its own runs. Replacing that with ours
+  // unasked would lose its results, so with it installed we wait for the command.
+  coverageFollowsReports = !extensions.getExtension(PHPUNIT_EXTENSION_ID);
+
+  // A saved file no longer matches the report's line numbers, so stop showing it.
+  context.subscriptions.push(workspace.onDidSaveTextDocument((doc) => {
+    if (shownCoverage?.files.has(doc.uri.toString())) void refreshCoverage(context, false);
+  }));
 
   // Auto-update namespace when a PHP file is moved/renamed in the file explorer
   context.subscriptions.push(workspace.onDidRenameFiles(async (e) => {
@@ -59,6 +78,124 @@ export function activate(context: ExtensionContext) {
       }
     }
   }));
+}
+
+const PHPUNIT_EXTENSION_ID = "recca0120.vscode-phpunit";
+
+type CoverageFileSummary = { uri: string; stale: boolean; coveredLines: number; executableLines: number; coveredMethods: number; methods: number };
+type CoverageReport = { path: string; generated: string; files: CoverageFileSummary[] };
+type ServerFileCoverage = {
+  uri: string;
+  stale: boolean;
+  lines: Array<{ line: number; hits: number }>;
+  methods: Array<{ name: string; line: number; endLine: number; hits: number }>;
+};
+
+function serverOffersCoverage(current: LanguageClient): boolean {
+  const experimental = current.initializeResult?.capabilities.experimental as { tuskCoverage?: boolean } | undefined;
+  return experimental?.tuskCoverage === true;
+}
+
+/** Create the coverage test controller the first time it's needed. VS Code shows the Testing view for any controller, so servers without coverage must not get one. */
+function ensureCoverageController(context: ExtensionContext): TestRunProfile {
+  if (coverageController && coverageProfile) return coverageProfile;
+  coverageController = tests.createTestController("tuskPhpCoverage", "Tusk PHP Coverage");
+  context.subscriptions.push(coverageController);
+  coverageProfile = coverageController.createRunProfile(
+    "Show Coverage Report",
+    TestRunProfileKind.Coverage,
+    () => refreshCoverage(context, true),
+    false
+  );
+  coverageProfile.loadDetailedCoverage = (_run, fileCoverage, token) => loadFileCoverage(context, fileCoverage, token);
+  return coverageProfile;
+}
+
+/** Load the current report into VS Code's coverage UI, one load at a time. */
+function refreshCoverage(context: ExtensionContext, fromUser: boolean): Promise<void> {
+  coverageQueue = coverageQueue
+    .catch(() => undefined)
+    .then(() => showCoverage(context, fromUser))
+    .catch((err) => {
+      outputChannel.appendLine(`Coverage error: ${formatError(err)}`);
+      if (fromUser) window.showErrorMessage(`Tusk PHP: could not load coverage: ${formatError(err)}`);
+    });
+  return coverageQueue;
+}
+
+async function showCoverage(context: ExtensionContext, fromUser: boolean): Promise<void> {
+  if (fromUser) coverageFollowsReports = true;
+  if (!coverageFollowsReports) return;
+  const current = client;
+  if (!current || !serverOffersCoverage(current)) {
+    if (fromUser) window.showWarningMessage("Tusk PHP: the running language server doesn't support test coverage yet.");
+    return;
+  }
+
+  const report = await current.sendRequest<CoverageReport | null>("tusk/coverageReport");
+  if (!report) {
+    outputChannel.appendLine("Coverage: no report found");
+    if (fromUser) window.showWarningMessage("Tusk PHP: no coverage report found. Run your tests with --coverage-clover clover.xml, or set tuskPhpLsp.coverage.reportPath. Tusk PHP never runs your tests.");
+    if (!shownCoverage) return;
+    // The report is gone. A run with no coverage makes VS Code stop showing the old one.
+    shownCoverage = undefined;
+    const emptyRun = coverageController?.createTestRun(new TestRunRequest(undefined, undefined, ensureCoverageController(context)), "Coverage report removed", false);
+    emptyRun?.end();
+    return;
+  }
+
+  // A stale file's line numbers may not match the report, so it's left out rather
+  // than painted onto the wrong lines. Files with no executable lines have nothing to show.
+  const shown = report.files.filter((f) => !f.stale && f.executableLines > 0);
+  const stale = report.files.filter((f) => f.stale);
+  const key = [report.path, report.generated, ...shown.map((f) => f.uri)].join("\n");
+  if (!fromUser && shownCoverage?.key === key) return;
+
+  const profile = ensureCoverageController(context);
+  const run = coverageController!.createTestRun(new TestRunRequest(undefined, undefined, profile), "Coverage report", false);
+  const summary = `Coverage from ${report.path}, written ${new Date(report.generated).toLocaleString()}: ${shown.length} file(s) shown, ${stale.length} hidden because they changed since then.`;
+  run.appendOutput(`${summary}\r\n`);
+  for (const f of stale) run.appendOutput(`Changed since the report: ${Uri.parse(f.uri).fsPath}\r\n`);
+  outputChannel.appendLine(summary);
+  for (const f of shown) {
+    run.addCoverage(new FileCoverage(
+      Uri.parse(f.uri),
+      new TestCoverageCount(f.coveredLines, f.executableLines),
+      undefined,
+      f.methods > 0 ? new TestCoverageCount(f.coveredMethods, f.methods) : undefined
+    ));
+  }
+  run.end();
+  shownCoverage = { key, files: new Set(shown.map((f) => Uri.parse(f.uri).toString())) };
+  if (fromUser) {
+    const hidden = stale.length > 0 ? ` ${stale.length} changed since then and are hidden until you re-run your tests.` : "";
+    window.showInformationMessage(`Tusk PHP: showing coverage for ${shown.length} file(s) from ${path.basename(report.path)}.${hidden}`);
+  }
+}
+
+/** Line and method details for a file in the coverage UI. Empty means unknown, never untested. */
+async function loadFileCoverage(context: ExtensionContext, fileCoverage: FileCoverage, token: CancellationToken): Promise<FileCoverageDetail[]> {
+  const current = client;
+  if (!current) return [];
+  const uri = fileCoverage.uri.toString();
+  // Unsaved edits may have moved lines, and the server only knows the file on disk.
+  if (workspace.textDocuments.some((d) => d.uri.toString() === uri && d.isDirty)) return [];
+  let result: ServerFileCoverage | null;
+  try {
+    result = await current.sendRequest<ServerFileCoverage | null>("tusk/fileCoverage", { textDocument: { uri } }, token);
+  } catch (err) {
+    outputChannel.appendLine(`Coverage error for ${uri}: ${formatError(err)}`);
+    return [];
+  }
+  if (!result || result.stale) {
+    // It changed outside the editor, such as a branch switch. Drop it from the list too.
+    void refreshCoverage(context, false);
+    return [];
+  }
+  return [
+    ...result.lines.map((l) => new StatementCoverage(l.hits, new VSPosition(l.line, 0))),
+    ...result.methods.map((m) => new DeclarationCoverage(m.name, m.hits, new VSRange(m.line, 0, m.endLine + 1, 0))),
+  ];
 }
 
 /** globalState key holding the last extension version the user was shown release notes for. */
@@ -376,6 +513,8 @@ async function startServer(context: ExtensionContext) {
       phpstanPath: config.get("diagnostics.phpstan.path", ""),
       phpstanLevel: config.get("diagnostics.phpstan.level", ""),
       phpstanConfig: config.get("diagnostics.phpstan.configPath", ""),
+      coverageReportPath: config.get("coverage.reportPath", ""),
+      coverageNotifications: true,
       pintEnabled: config.get("diagnostics.pint.enable", true),
       pintPath: config.get("diagnostics.pint.path", ""),
       pintConfig: config.get("diagnostics.pint.configPath", ""),
@@ -442,6 +581,9 @@ async function startServer(context: ExtensionContext) {
   const nextClient = new LanguageClient("tuskPhpLsp", "Tusk PHP LSP", serverOptions, clientOptions);
   nextClient.onDidChangeState(({ oldState, newState }) => {
     outputChannel.appendLine(`Tusk PHP LSP state: ${State[oldState]} -> ${State[newState]}`);
+  });
+  nextClient.onNotification("tusk/coverageChanged", () => {
+    void refreshCoverage(context, false);
   });
   client = nextClient;
   clientStart = Promise.resolve(nextClient.start())
