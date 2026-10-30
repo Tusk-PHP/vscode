@@ -17,6 +17,15 @@ This changelog is written for people installing the extension; it does not follo
 
 - Show a one-time **"what's new"** prompt after the extension updates, linking to this
   changelog (VS Code only).
+- **Test coverage in VS Code's own coverage UI** — covered and uncovered lines and methods
+  from the Clover report your tests last wrote (`--coverage-clover clover.xml`). Tusk PHP
+  reads the report and never runs your tests. It loads on its own and follows new reports,
+  or run *Tusk PHP: Show Test Coverage*. Files that changed since the report are hidden
+  until you re-run your tests, and code the report doesn't mention is left unmarked. With
+  the PHPUnit extension (`recca0120.vscode-phpunit`) installed, its coverage is left alone
+  until you run the command. Needs a language server newer than 0.9.0.
+- New `tuskPhpLsp.coverage.reportPath` setting, for reports the server doesn't find on its own.
+- Requires VS Code 1.88 or newer.
 
 ## [0.9.0] - 2026-06-22
 

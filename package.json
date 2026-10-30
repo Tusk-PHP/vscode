@@ -15,7 +15,7 @@
     "url": "https://github.com/Tusk-PHP/vscode.git"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.88.0"
   },
   "categories": ["Programming Languages", "Linters"],
   "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
@@ -78,6 +78,11 @@
           "default": "",
           "description": "Custom path to phpstan.neon config file"
         },
+        "tuskPhpLsp.coverage.reportPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Clover coverage report, absolute or relative to the workspace. Empty looks in phpunit.xml and common locations. Tusk PHP reads this report and never runs your tests."
+        },
         "tuskPhpLsp.diagnostics.pint.enable": {
           "type": "boolean",
           "default": true,
@@ -136,6 +141,10 @@
         "title": "Tusk PHP: Re-index Workspace"
       },
       {
+        "command": "tuskPhpLsp.showCoverage",
+        "title": "Tusk PHP: Show Test Coverage"
+      },
+      {
         "command": "tuskPhpLsp.copyNamespace",
         "title": "Tusk PHP: Copy Namespace"
       },
@@ -156,7 +165,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "^1.88.0",
     "esbuild": "^0.28.1",
     "typescript": "^5.3.0"
   }
