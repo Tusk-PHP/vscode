@@ -15,6 +15,13 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-30
+
+Bundles **Tusk PHP language server 0.10.0** —
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.10.0). The extension
+skipped a 0.9.0 release, so this is also the first to include
+[server 0.9.0](https://github.com/Tusk-PHP/lsp/releases/tag/0.9.0).
+
 - Show a one-time **"what's new"** prompt after the extension updates, linking to this
   changelog (VS Code only).
 - **Test coverage in VS Code's own coverage UI** — covered and uncovered lines and methods
@@ -23,15 +30,9 @@ This changelog is written for people installing the extension; it does not follo
   or run *Tusk PHP: Show Test Coverage*. Files that changed since the report are hidden
   until you re-run your tests, and code the report doesn't mention is left unmarked. With
   the PHPUnit extension (`recca0120.vscode-phpunit`) installed, its coverage is left alone
-  until you run the command. Needs a language server newer than 0.9.0.
+  until you run the command. With your own server build (`tuskPhpLsp.executablePath`), it needs 0.10.0 or newer.
 - New `tuskPhpLsp.coverage.reportPath` setting, for reports the server doesn't find on its own.
 - Requires VS Code 1.88 or newer.
-
-## [0.9.0] - 2026-06-22
-
-Bundles **Tusk PHP language server 0.9.0** —
-[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.9.0).
-
 - **Namespace commands** — *Copy Namespace* and *Move to Namespace…*, plus an automatic
   prompt to update a file's namespace when you move or rename it in the explorer.
 - **`composer.json` intelligence** — hover cards on `require` / `require-dev` packages,

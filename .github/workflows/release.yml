@@ -12,6 +12,11 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Set on the job because a step's `if` can't see that step's own env, which
+    # would skip the publish steps without any error.
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -57,17 +62,14 @@ jobs:
       - name: Package (.vsix)
         run: bun run package
 
+      # Both publish the .vsix built above, so what ships has the verified binaries.
       - name: Publish to VS Marketplace
         if: ${{ env.VSCE_PAT != '' }}
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: bun x @vscode/vsce publish --pat "$VSCE_PAT"
+        run: bun x @vscode/vsce publish --packagePath ./*.vsix --pat "$VSCE_PAT"
 
       - name: Publish to Open VSX
         if: ${{ env.OVSX_PAT != '' }}
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        run: bun x ovsx publish --pat "$OVSX_PAT"
+        run: bun x ovsx publish ./*.vsix --pat "$OVSX_PAT"
 
       - name: Attach .vsix to GitHub release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
