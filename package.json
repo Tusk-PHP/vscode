@@ -21,6 +21,8 @@
   "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
   "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
   "main": "./out/extension.js",
+  "browser": "./out/web.js",
+  "extensionDependencies": ["ms-vscode.wasm-wasi-core"],
   "extensionKind": ["workspace"],
   "contributes": {
     "configuration": {
@@ -158,14 +160,19 @@
     "compile": "tsc -p ./ --noEmit",
     "bundle": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "bun run bundle -- --watch",
-    "package": "bun run bundle -- --minify && bun x @vscode/vsce package"
+    "package": "bun run bundle -- --minify && bun x @vscode/vsce package",
+    "bundle:web": "esbuild src/web.ts --bundle --outfile=out/web.js --external:vscode --format=cjs --platform=browser --main-fields=browser,module,main --conditions=browser --sourcemap",
+    "web": "vscode-test-web --browserType=none --coi --port=3939 --extensionId=ms-vscode.wasm-wasi-core --extensionDevelopmentPath=."
   },
   "dependencies": {
+    "@vscode/wasm-wasi": "^1.0.1",
+    "@vscode/wasm-wasi-lsp": "^0.1.0-pre.1",
     "vscode-languageclient": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.88.0",
+    "@vscode/test-web": "^0.0.81",
     "esbuild": "^0.28.1",
     "typescript": "^5.3.0"
   }
