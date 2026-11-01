@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": [
+      "es2022",
+      "webworker"
+    ],
+    "types": [
+      "vscode"
+    ],
+    "noEmit": true
+  },
+  "include": [
+    "src/web.ts"
+  ],
+  "exclude": []
+}
