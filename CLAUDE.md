@@ -83,7 +83,7 @@ bun run bundle      # esbuild → out/extension.js (needed to run the extension)
 Edit `tusk-lsp.json`: set `lsp.version` and replace every `lsp.sha256.<platform>` with the
 real sums from that upstream `Tusk-PHP/lsp` release's checksums. Release tags on the server
 repo have **no leading `v`**. The release workflow aborts if any sum is missing or `TODO`,
-so fill all five platforms. Bump deliberately, after compatibility testing.
+so fill all six platforms, including `wasip1-wasm`. Bump deliberately, after compatibility testing.
 
 ## Changelogs
 
