@@ -15,6 +15,11 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-02
+
+Bundles **Tusk PHP language server 0.11.0** —
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.11.0).
+
 ## [0.10.0] - 2026-10-30
 
 Bundles **Tusk PHP language server 0.10.0** —
