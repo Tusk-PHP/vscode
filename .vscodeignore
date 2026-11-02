@@ -5,6 +5,8 @@ docs/**
 CLAUDE.md
 CONTRIBUTING.md
 tsconfig.json
+tsconfig.web.json
+.vscode-test-web/**
 *.vsix
 *.tsbuildinfo
 bun.lock

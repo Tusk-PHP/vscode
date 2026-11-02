@@ -22,7 +22,6 @@
   "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
   "main": "./out/extension.js",
   "browser": "./out/web.js",
-  "extensionDependencies": ["ms-vscode.wasm-wasi-core"],
   "extensionKind": ["workspace"],
   "contributes": {
     "configuration": {
@@ -154,13 +153,20 @@
         "command": "tuskPhpLsp.moveToNamespace",
         "title": "Tusk PHP: Move to Namespace..."
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "tuskPhpLsp.showCoverage", "when": "!isWeb" },
+        { "command": "tuskPhpLsp.copyNamespace", "when": "!isWeb" },
+        { "command": "tuskPhpLsp.moveToNamespace", "when": "!isWeb" }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./ --noEmit",
     "bundle": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "bun run bundle -- --watch",
-    "package": "bun run bundle -- --minify && bun x @vscode/vsce package",
+    "package": "bun run bundle -- --minify && bun run bundle:web -- --minify && bun x @vscode/vsce package --no-dependencies",
     "bundle:web": "esbuild src/web.ts --bundle --outfile=out/web.js --external:vscode --format=cjs --platform=browser --main-fields=browser,module,main --conditions=browser --sourcemap",
     "web": "vscode-test-web --browserType=none --coi --port=3939 --extensionId=ms-vscode.wasm-wasi-core --extensionDevelopmentPath=."
   },
