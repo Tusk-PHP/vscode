@@ -40,12 +40,16 @@ jobs:
           lsp_version=$(jq -r '.lsp.version' tusk-lsp.json)
           # LSP release tags have no leading "v".
           base="https://github.com/Tusk-PHP/lsp/releases/download/${lsp_version}"
-          for platform in darwin-arm64 darwin-amd64 linux-amd64 linux-arm64 windows-amd64; do
+          for platform in darwin-arm64 darwin-amd64 linux-amd64 linux-arm64 windows-amd64 wasip1-wasm; do
             asset="tusk-php-${platform}"
             out="bin/${platform}/tusk-php"
             if [ "$platform" = "windows-amd64" ]; then
               asset="${asset}.exe"
               out="${out}.exe"
+            elif [ "$platform" = "wasip1-wasm" ]; then
+              # src/web.ts runs this one in the browser.
+              asset="${asset}.wasm"
+              out="bin/wasm/tusk-php.wasm"
             fi
             expected=$(jq -r --arg p "$platform" '.lsp.sha256[$p]' tusk-lsp.json)
             if [ "$expected" = "TODO" ] || [ "$expected" = "null" ] || [ -z "$expected" ]; then
@@ -54,7 +58,7 @@ jobs:
             fi
             # Pins are written as "sha256:<hex>"; sha256sum wants the bare hex.
             expected="${expected#sha256:}"
-            mkdir -p "bin/${platform}"
+            mkdir -p "$(dirname "$out")"
             echo "Downloading ${asset} -> ${out}"
             curl -fsSL "${base}/${asset}" -o "${out}"
             chmod +x "${out}"

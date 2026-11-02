@@ -15,6 +15,8 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+- **Runs in the browser**: on vscode.dev and github.dev, the extension runs the language server as WebAssembly, with completion, hover, navigation and built-in diagnostics. PHPStan, Pint and test coverage stay desktop-only, and the first run asks to install Microsoft's WebAssembly Execution Engine extension. The server is limited to 512 MB there and isn't restarted automatically if it stops; use **Tusk PHP: Restart Server**.
+
 ## [0.11.0] - 2026-11-02
 
 Bundles **Tusk PHP language server 0.11.0** —
