@@ -101,8 +101,9 @@
         },
         "tuskPhpLsp.maxIndexFiles": {
           "type": "number",
-          "default": 1e4,
-          "description": "Maximum number of PHP files to index"
+          "default": 0,
+          "minimum": 0,
+          "markdownDescription": "Maximum number of workspace PHP files to index. `0` indexes all of them. Set a limit only if the server uses too much memory: all of Magento 2 (about 25,000 files) takes about 600 MB. Composer dependencies aren't counted. In the browser (vscode.dev), the server uses 10,000 unless you set this."
         },
         "tuskPhpLsp.excludePaths": {
           "type": "array",

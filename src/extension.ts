@@ -521,7 +521,7 @@ async function startServer(context: ExtensionContext) {
       pintEnabled: config.get("diagnostics.pint.enable", true),
       pintPath: config.get("diagnostics.pint.path", ""),
       pintConfig: config.get("diagnostics.pint.configPath", ""),
-      maxIndexFiles: config.get("maxIndexFiles", 10000),
+      maxIndexFiles: userSetting<number>(config, "maxIndexFiles"),
       excludePaths: config.get("excludePaths", ["vendor", "node_modules", ".git"]),
       phpManualLocale: config.get("phpManual.locale", ""),
       phpManualOpenOnDefinition: config.get("phpManual.openOnDefinition", false),
@@ -643,4 +643,13 @@ async function stopServer() {
 
 export function deactivate(): Thenable<void> | undefined {
   return stopServer();
+}
+
+// The value the user set for a setting, or undefined when they set none. Settings
+// read this way are left out of initializationOptions unless set, so the server's
+// own default applies: for maxIndexFiles that is no limit on desktop and 10,000
+// in the browser, where memory is tight.
+function userSetting<T>(config: { inspect<V>(key: string): { globalValue?: V; workspaceValue?: V; workspaceFolderValue?: V } | undefined }, key: string): T | undefined {
+  const value = config.inspect<T>(key);
+  return value?.workspaceFolderValue ?? value?.workspaceValue ?? value?.globalValue;
 }
