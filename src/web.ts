@@ -164,7 +164,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
       diagnosticsEnabled: config.get("diagnostics.enable", true),
       phpstanEnabled: false,
       pintEnabled: false,
-      maxIndexFiles: config.get("maxIndexFiles", 10000),
+      maxIndexFiles: userSetting<number>(config, "maxIndexFiles"),
       excludePaths: config.get("excludePaths", ["vendor", "node_modules", ".git"]),
       phpManualLocale: config.get("phpManual.locale", ""),
       composer: { hover: { enable: config.get("composer.hover.enable", true) } },
@@ -201,4 +201,13 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
 export function deactivate(): Promise<void> | undefined {
   return client?.stop();
+}
+
+// The value the user set for a setting, or undefined when they set none. Settings
+// read this way are left out of initializationOptions unless set, so the server's
+// own default applies: for maxIndexFiles that is no limit on desktop and 10,000
+// in the browser, where memory is tight.
+function userSetting<T>(config: { inspect<V>(key: string): { globalValue?: V; workspaceValue?: V; workspaceFolderValue?: V } | undefined }, key: string): T | undefined {
+  const value = config.inspect<T>(key);
+  return value?.workspaceFolderValue ?? value?.workspaceValue ?? value?.globalValue;
 }
