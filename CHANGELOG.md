@@ -15,6 +15,7 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+- `tuskPhpLsp.framework` now accepts `magento`. Magento 2 projects are detected on their own with the default `auto`; set it by hand only if detection misses yours. Needs language server 0.12.0 or later.
 - **No file limit by default**: `tuskPhpLsp.maxIndexFiles` now defaults to `0`, so the language server indexes your whole project, including large ones such as Magento 2. Set a number only if the server uses too much memory. The extension now passes this setting on only when you set it; in the browser the server keeps its own limit of 10,000 files. Needs language server 0.12.0 or later.
 
 ## [0.11.1] - 2026-11-02

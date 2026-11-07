@@ -18,7 +18,7 @@
     "vscode": "^1.88.0"
   },
   "categories": ["Programming Languages", "Linters"],
-  "keywords": ["php", "lsp", "laravel", "symfony", "intellisense"],
+  "keywords": ["php", "lsp", "laravel", "symfony", "magento", "intellisense"],
   "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
   "main": "./out/extension.js",
   "browser": "./out/web.js",
@@ -46,7 +46,7 @@
         "tuskPhpLsp.framework": {
           "type": "string",
           "default": "auto",
-          "enum": ["auto", "laravel", "symfony", "none"],
+          "enum": ["auto", "laravel", "symfony", "magento", "none"],
           "description": "Framework to use for container-aware intelligence"
         },
         "tuskPhpLsp.containerAware": {
