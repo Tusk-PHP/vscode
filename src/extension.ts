@@ -501,6 +501,9 @@ async function startServer(context: ExtensionContext) {
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
       { scheme: "file", language: "php" },
+      // Blade views, when a Blade extension gives them their own language.
+      // Without one they are PHP and the selector above already covers them.
+      { scheme: "file", language: "blade" },
       // The pattern restriction is critical: without it every JSON file
       // in the workspace would route to our server.
       { scheme: "file", language: "json", pattern: "**/composer.json" },
