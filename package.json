@@ -19,7 +19,7 @@
   },
   "categories": ["Programming Languages", "Linters"],
   "keywords": ["php", "lsp", "laravel", "symfony", "magento", "intellisense"],
-  "activationEvents": ["onLanguage:php", "workspaceContains:**/composer.json"],
+  "activationEvents": ["onLanguage:php", "onLanguage:blade", "workspaceContains:**/composer.json"],
   "main": "./out/extension.js",
   "browser": "./out/web.js",
   "extensionKind": ["workspace"],

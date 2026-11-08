@@ -153,7 +153,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   const root = folder.uri.toString(true).replace(/\/$/, "");
   const config = workspace.getConfiguration("tuskPhpLsp");
   const clientOptions: LanguageClientOptions = {
-    documentSelector: [{ language: "php", scheme: folder.uri.scheme }],
+    documentSelector: [
+      { language: "php", scheme: folder.uri.scheme },
+      { language: "blade", scheme: folder.uri.scheme },
+    ],
     synchronize: { fileEvents: [workspace.createFileSystemWatcher("**/*.php"), workspace.createFileSystemWatcher("**/composer.{json,lock}")] },
     outputChannel: output,
     // The same settings as on desktop, except for PHPStan and Pint: a browser can't run them.
