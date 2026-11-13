@@ -534,6 +534,7 @@ async function startServer(context: ExtensionContext) {
         },
         openOnDefinition: config.get("composer.openOnDefinition", false),
       },
+      autoImport: { aliasStyle: userSetting<string>(config, "autoImport.aliasStyle") },
     },
     middleware: {
       executeCommand: async (command, args, next) => {
