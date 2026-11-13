@@ -15,6 +15,16 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-13
+
+Bundles **Tusk PHP language server 0.14.0** —
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.14.0).
+
+- **Typing no longer waits for diagnostics**: they're worked out once you pause, so completion and hover answer straight away, even in files thousands of lines long.
+- **Fewer false warnings**: a variable assigned in different branches, checked with `instanceof`, caught in `catch (A|B $e)` or guarded by `method_exists()` now has the type PHP gives it, in hover and completion too.
+- **Too few arguments** to a function or method are reported, since PHP throws on them. Calls inside a version check (`version_compare()`, `PHP_VERSION_ID`) are left alone.
+- **Class completion no longer adds a clashing import**: when the short name is already taken, the class is imported under an alias (`use Illuminate\Foundation\Auth\User as UserAuth;`). The new **Auto Import: Alias Style** setting (`tuskPhpLsp.autoImport.aliasStyle`) picks `suffix`, `prefix` or `fullyQualified`.
+
 ## [0.13.0] - 2026-11-09
 
 Bundles **Tusk PHP language server 0.13.0** —
