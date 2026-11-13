@@ -171,6 +171,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
       excludePaths: config.get("excludePaths", ["vendor", "node_modules", ".git"]),
       phpManualLocale: config.get("phpManual.locale", ""),
       composer: { hover: { enable: config.get("composer.hover.enable", true) } },
+      autoImport: { aliasStyle: userSetting<string>(config, "autoImport.aliasStyle") },
     },
     // Never restart on its own: a crash loop would pile up memory and logs.
     errorHandler: {

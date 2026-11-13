@@ -2,7 +2,7 @@
   "name": "tusk-php",
   "displayName": "Tusk PHP",
   "description": "High-performance PHP 8.5+ language server with Laravel & Symfony container-aware intelligence",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "publisher": "open-southeners",
   "license": "MIT",
   "icon": "icon.png",
@@ -130,6 +130,17 @@
           "type": "boolean",
           "default": false,
           "description": "When enabled, Cmd+Click (Go to Definition) on a package name in composer.json opens the package's Packagist (or repository) page in your browser. Requires the editor to support window/showDocument (VS Code does)."
+        },
+        "tuskPhpLsp.autoImport.aliasStyle": {
+          "type": "string",
+          "enum": ["suffix", "prefix", "fullyQualified"],
+          "enumDescriptions": [
+            "use App\\Models\\User as UserModel; and insert UserModel",
+            "use App\\Models\\User as ModelUser; and insert ModelUser",
+            "Add no import and insert \\App\\Models\\User"
+          ],
+          "default": "suffix",
+          "markdownDescription": "How class completion imports a class whose short name is already in use in the file, by another import, a class declared in the file or a class in its namespace. Unset, `.tusk-php.json` decides, then `suffix`."
         }
       }
     },
