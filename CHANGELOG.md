@@ -15,6 +15,16 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-22
+
+Bundles **Tusk PHP language server 0.15.0** —
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.15.0).
+
+- **Blade views, in full**: hover, completion, go to definition, references and rename work in the PHP inside Blade views. Directives, view names, sections, stacks and components (including Flux and Filament) complete and link, variables passed to a view are typed, and unclosed directives and unknown components are reported.
+- **PHP 8.6**: projects on PHP 8.6 get its new syntax (partial function application, parameter doc comments, readonly property defaults), its new functions and classes, and its deprecations.
+- **Eloquent static calls** such as `Category::where()` complete and hover with the query builder's methods and keep the model's type, and local scopes (`scopeActive()` or `#[Scope]`) complete on models and their queries.
+- **Fewer false warnings** on real projects: about 1,000 fewer across Laravel, Symfony, WordPress and Magento 2, from classes in PSR-0 and optional Composer packages, plain PHP views, and private members used by traits.
+
 ## [0.14.0] - 2026-11-18
 
 Bundles **Tusk PHP language server 0.14.0** —
