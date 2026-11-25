@@ -15,6 +15,20 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-25
+
+Bundles **Tusk PHP language server 0.16.0** —
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.16.0).
+Thanks to [@stubbedev](https://github.com/stubbedev) and [@AJenbo](https://github.com/AJenbo), who contributed to this server release.
+
+- **Type hierarchy**: browse a class's parents, interfaces and traits, and the classes that extend or implement it.
+- **Go to declaration** opens the interface, parent class or trait that first declares a method, property or constant, while go to definition keeps opening the implementation.
+- **Ignore a diagnostic** with a `// @tusk-ignore` comment (or the new "Ignore … on this line" quick fix), across files with `diagnosticIgnore` rules in `.tusk-php.json`, and through the `@phpstan-ignore` comments a project already has.
+- **Clickable links** on `require` and `include` paths, Laravel path helpers such as `base_path('routes/web.php')`, and URLs in comments.
+- **New diagnostics**: `unknown-named-argument` for a named argument the callee has no parameter for, and `unused-private-constant` for a private constant nothing reads.
+- **Right answers from the first request**: while a project is still being indexed, a class the editor asks about is loaded straight away, so definition, hover and completion work immediately.
+- **Fewer false warnings** on real projects, and Symfony translation keys and console command names now complete and link.
+
 ## [0.15.0] - 2026-11-22
 
 Bundles **Tusk PHP language server 0.15.0** —
