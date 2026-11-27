@@ -15,6 +15,18 @@ This changelog is written for people installing the extension; it does not follo
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-27
+
+Bundles **Tusk PHP language server 0.17.0** —
+[what's new in the server](https://github.com/Tusk-PHP/lsp/releases/tag/0.17.0).
+Thanks to [@stubbedev](https://github.com/stubbedev), who contributed to this server release.
+
+- **Right columns on lines with non-ASCII text**: after `'Größe'`, an emoji or CJK, hover, go to definition, rename and diagnostics no longer point a few characters too far right, and names with non-ASCII letters such as `$café` work.
+- **Changes on disk are picked up**: files changed by a branch switch, a code generator or `composer install`, and a new PHP version in `composer.json` or `.tusk-php.json`, apply without a restart.
+- **Hover on a constant** shows its docblock, and column and relation names now complete on query builders held in variables and on typed relations.
+- **More accurate answers** for trait `insteadof`/`as` rules, `Class::NAME` versus `Class::$NAME`, bare function calls, Eloquent relation and accessor properties, and document highlights.
+- **Faster** workspace symbol search on large projects, which now returns at most the 500 best matches.
+
 ## [0.16.0] - 2026-11-25
 
 Bundles **Tusk PHP language server 0.16.0** —
